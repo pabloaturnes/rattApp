@@ -19,8 +19,8 @@ useEffect(()=>{
 
     let storage = window.localStorage
     const localStorageData = JSON.parse(storage.getItem("peopleData"))
-    console.log(localStorageData)
-    setPeopleData(localStorageData)
+    localStorageData? setPeopleData(localStorageData) : setPeopleData([])
+    
 
     
 
