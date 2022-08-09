@@ -4,46 +4,20 @@ import AddForm from "./AddForm"
 import Extras from "./Extras"
 import MeetingTable from "./MeetingTable"
 import PeopleTable from "./PeopleTable"
+import useData from "../hooks/useData"
+import { useGlobalContext,handleUserContext } from "./GlobalProvider"
 
 const Meeting = () =>{
 
 
-const [peopleData, setPeopleData] = useState([])
+
 const [extras, setExtras] = useState({tip : 0, tax : 0})
 const [tableData, setTableData] = useState([])
 
+const {loggedUser,handleUserContext} = useGlobalContext()
 
-//en el use efect controla si hay datos de las personas en localStorage
+const {updateMeeting} = useData() //actualiza los datos en la nube, pero dejalo para el final. pensalo. 
 
-useEffect(()=>{
-
-    let storage = window.localStorage
-    const localStorageData = JSON.parse(storage.getItem("peopleData"))
-    localStorageData? setPeopleData(localStorageData) : setPeopleData([])
-    
-
-    
-
-},[])
-
-const handleAddForm = (e) =>{
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const newPerson = {
-        name : formData.get("nombre"),
-        gasto : formData.get("gasto"),
-        puso : formData.get("aporto")
-    }
-    let newPeopleData = [...peopleData]
-    newPeopleData.push(newPerson)
-
-    // armo un local storage para la persistencia de datos
-    let storage = window.localStorage
-    let ToString = JSON.stringify(newPeopleData)
-    storage.setItem("peopleData", ToString)
-
-    setPeopleData(newPeopleData)
-}
 
 const handleExtrasForm = (e) =>{
     e.preventDefault()
@@ -55,24 +29,21 @@ const handleExtrasForm = (e) =>{
     console.log(newExtras)
     setExtras(newExtras)
     
-    //ByEqualParts(extras,peopleData)
-    byIndividuals(extras,peopleData)
-
 }
 
-const handleDeleteData = (index) =>{
-    const newPeopleData = [...peopleData]
-    newPeopleData.splice(index,1)
 
-        // armo un local storage para actualizar datos
-        let storage = window.localStorage
-        let ToString = JSON.stringify(newPeopleData)
-        storage.setItem("peopleData", ToString)
-
-    setPeopleData(newPeopleData)
-}
 
 const ByEqualParts = (extras) =>{
+
+    let peopleData = []
+    //preguntar si esta en offline u en offline y en base a eso asignar valor a peopleData
+    if(loggedUser.actualMeeting){
+        //si hay un usuario logeado y el usuario selecciono una reunion
+        peopleData = [...loggedUser.actualMeeting.data]
+    }else{
+        //si el usuario no selecciono una reunion o no esta logueado
+        peopleData = [...loggedUser.offlineData]
+    }
 
     // calculo total del gasto sin tax   
     const total = peopleData.reduce((a, b) =>{
@@ -113,6 +84,17 @@ const ByEqualParts = (extras) =>{
 //calcula el gasto de manera individual segun lo consumido
 const byIndividuals = (extras) =>{
 
+    //preguntar si esta en offline u en offline y en base a eso asignar valor a peopleData
+    let peopleData = []
+    //preguntar si esta en offline u en offline y en base a eso asignar valor a peopleData
+    if(loggedUser.actualMeeting){
+        //si hay un usuario logeado y el usuario selecciono una reunion
+        peopleData = [...loggedUser.actualMeeting.data]
+    }else{
+        //si el usuario no selecciono una reunion o no esta logueado
+        peopleData = [...loggedUser.offlineData]
+    }
+
     const newTableData = [...peopleData]
 
     newTableData.map((person)=>{
@@ -147,8 +129,8 @@ const byIndividuals = (extras) =>{
 
     return (
         <>
-            <AddForm handleAddForm={handleAddForm} />
-            <PeopleTable peopleData={peopleData} handleDeleteData={handleDeleteData} />
+            <AddForm />
+            <PeopleTable   /> 
             <Extras byIndividuals={byIndividuals} ByEqualParts={ByEqualParts} />
             <MeetingTable tableData={tableData}  />
         </>
