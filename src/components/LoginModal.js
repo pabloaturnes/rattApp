@@ -1,25 +1,43 @@
 
-import {Button, Modal, Text, Input, Row, Checkbox } from '@nextui-org/react';
+import {Button, Modal, Text, Input, Row, Checkbox, Loading } from '@nextui-org/react';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useGlobalContext,handleUserContext } from "./GlobalProvider"
 import useData from '../hooks/useData';
+import { useState } from 'react';
 
 
 const LoginModal = ({loginModalCloseHandler,loginModalVisible,registerModalHandler}) =>{
 
-
+    const [error, setError] = useState({error: false, msj : null})
+    const [loader, setLoader] = useState(false)
     const {loggedUser ,handleUserContext} = useGlobalContext()
     const {getUserMeetings} = useData()
 
+    const handleClose = () =>{
+        setError({error: false, msj : null})
+        setLoader(false)
+        loginModalCloseHandler()
+    }
+
  const handleSubmit = async (e) =>{
     e.preventDefault()
-    const formData = new FormData(e.target)
-    const email = formData.get("email")
-    const password = formData.get("password")
 
+    const formData = new FormData(e.target)
+    const email = formData.get("email").trim()
+    const password = formData.get("password").trim()
+
+
+    if(email == "" || password == ""){
+        setError({error: true, msj : "Debes completar todos los campos"})
+        return
+    }
+
+
+    setLoader(true)
     const auth = getAuth();
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
+
         // Signed in
         const user = userCredential.user;
         
@@ -33,13 +51,16 @@ const LoginModal = ({loginModalCloseHandler,loginModalVisible,registerModalHandl
             logged : true,
             offlineData : loggedUser.offlineData 
         }
-        
+        setLoader(false)
         //cambio usuario en el contexto
         handleUserContext(updateLoggedUser)
+        setError({error: true, msj : null})
         loginModalCloseHandler()
     }catch(error) {
-        const errorCode = error.code;
-        const errorMessage = error.message;
+        setLoader(false)
+        if(error.code == "auth/user-not-found") setError({error:true, msj:"Usuario no encontrado"}) 
+        if(error.code == "auth/wrong-password") setError({error:true, msj:"Contraseña incorrecta"})  
+        if(error.code == "auth/too-many-requests") setError({error:true, msj:"La cuenta ha sido bloqueada temporalmente, intenta mas tarde"})   
         
     };
  }
@@ -52,7 +73,7 @@ const LoginModal = ({loginModalCloseHandler,loginModalVisible,registerModalHandl
             aria-labelledby="modal-title"
             aria-describedby="modal-description"
             open={loginModalVisible}
-            onClose={loginModalCloseHandler}
+            onClose={handleClose}
             css={{
                 '@xs': {
                     width: '80vw'
@@ -94,12 +115,16 @@ const LoginModal = ({loginModalCloseHandler,loginModalVisible,registerModalHandl
                         </Checkbox>
                         <Text size={14}>Forgot password?</Text>
                     </Row>
+                    <Row justify="space-between">
+                        {loader && <Loading size="xs"></Loading> }
+                        {error && <Text  color="error" size={14}>{error.msj}</Text> }
+                    </Row>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button auto color="primary" onClick={registerModalHandler}>
                        ¡Create an account!
                     </Button>
-                    <Button auto flat color="error" onClick={loginModalCloseHandler}>
+                    <Button auto flat color="error" onClick={handleClose}>
                         Close
                     </Button>
                     <Button auto type="submit">

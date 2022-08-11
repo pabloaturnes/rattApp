@@ -8,7 +8,7 @@ const PeopleTable = () =>{
     const BodyStile = {color : "#F5A524", backgroundColor: "white", textAlign : "center"} 
 
     const {loggedUser,handleUserContext} = useGlobalContext()
-    const {updateMeetingData} = useData()
+    const {updateMeetingData,getMeetingData} = useData()
 
     const handleDeleteData = (index) =>{
 
@@ -51,6 +51,28 @@ const PeopleTable = () =>{
 
 }
 
+const handleGetMeetingData = async () =>{
+
+    if(loggedUser.actualMeeting != null){
+        //pido la data actualizada de la reunion
+        const cloudData = await getMeetingData(loggedUser.actualMeeting.id) 
+        //actualizo loggedUser tanto en actual meeting como en userMeetings.
+        let updatedLoggedUser = Object.assign({},loggedUser)
+        updatedLoggedUser.actualMeeting.data = cloudData
+
+        const updatedLoggedUserMeetings = updatedLoggedUser.userMeetings.findIndex((object, index) => {
+            if (object.id === updatedLoggedUser.actualMeeting.id ) {
+                object.data = cloudData
+                return true
+            }
+        });
+
+        handleUserContext(updatedLoggedUser)
+    }
+
+
+}
+
 
 let actualPeopleData = []
 //preguntar si esta en offline u en offline y en base a eso asignar valor a peopleData
@@ -67,6 +89,8 @@ if(loggedUser.actualMeeting){
         <>
             <Spacer y={1} />
             <Text color="warning" h2 css={{textAlign : "center"}}>Attendees</Text>
+            <Spacer y={1}/>
+            <Button auto size="sm" css={{marginRight : "auto", marginLeft: "auto"}} onClick={handleGetMeetingData}  ><i className="bi bi-rss"></i></Button>
             <Spacer y={1}/>
             <Table  css={{height: "auto", minWidth: "100%", backgroundColor: "white" }} aria-label="Tabla de contenidos" >
                 <Table.Header >

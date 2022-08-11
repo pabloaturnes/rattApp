@@ -11,8 +11,21 @@ const useData = () =>{
 
 
 
-    const getMeeting = () =>{
+    const getMeetingData = async (meetingId) =>{
+        try {
+            const docRef = doc(db, "meetings", meetingId);
+            const docSnap = await getDoc(docRef);
+    
+            
 
+                let docData = docSnap.data()
+
+                return docSnap.data().data
+                
+
+        } catch (error) {
+            console.log("error: ", error)
+        }
     }
 
 
@@ -41,11 +54,6 @@ const useData = () =>{
         }
     }
 
-
-
-    const deleteMeeting = () =>{
-
-    }
 
 
 
@@ -155,7 +163,7 @@ const useData = () =>{
     }
 
 
-    return {getMeeting,createMeeting,deleteMeeting,deleteThisUserFromMeeting,addThisUserToAMeeting,updateMeetingData, getUserMeetings}
+    return {getMeetingData,createMeeting,deleteThisUserFromMeeting,addThisUserToAMeeting,updateMeetingData, getUserMeetings}
 
 }
 
